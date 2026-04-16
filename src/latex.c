@@ -173,8 +173,8 @@ static node_t *parse_primary(parser_t *p)
         size_t start = p->pos;
         while (p->pos < p->len && peek(p) != '\0' && 
                peek(p) != '{' && peek(p) != '}' && 
-               peek(p) != '\\' && peek(p) != '_' && 
-               peek(p) != '^' && peek(p) != ' ') {
+               peek(p) != '\\' && peek(p) != '_' &&
+               peek(p) != '^' && peek(p) != '$' && peek(p) != ' ') {
             consume(p);
         }
         return make_text_node(p->input + start, p->pos - start);
@@ -250,7 +250,18 @@ node_t *latex_parse(const char *input)
         .pos = 0,
         .len = strlen(input)
     };
-    
+
+    return parse_expr(&p);
+}
+
+node_t *latex_parse_n(const char *input, size_t len)
+{
+    parser_t p = {
+        .input = input,
+        .pos = 0,
+        .len = len
+    };
+
     return parse_expr(&p);
 }
 

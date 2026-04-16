@@ -55,6 +55,9 @@ struct node {
 /* Parse LaTeX string into AST */
 node_t *latex_parse(const char *input);
 
+/* Parse LaTeX substring of given length into AST */
+node_t *latex_parse_n(const char *input, size_t len);
+
 /* Free AST tree */
 void latex_free(node_t *node);
 

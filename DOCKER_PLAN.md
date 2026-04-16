@@ -21,12 +21,26 @@ Run the full Docker implementation for LaTeX Viewer with Docker Desktop data, im
 | 1 — Script hardening | ✅ Complete |
 | 2 — toolchain.cmake | ✅ Complete (kept for host builds; Docker uses fxsdk toolchain) |
 | 3 — .gitignore + .dockerignore | ✅ Complete |
-| 4 — Dockerfile | ✅ Complete — produces LaTeX_Viewer.g3a (73K) |
+| 4 — Dockerfile | ✅ Complete — produces LaTeX_Viewer.g3a (78K) |
 | 5 — DOCKER.md | ⏳ Pending |
-| 6 — Verify + deploy | 🔄 In progress — .g3a built, awaiting calculator test |
+| 6 — Verify + deploy | ✅ Verified on emulator — awaiting physical calculator test |
 
-**No blockers.** Docker build produces a valid .g3a artifact in dist/.
-Next: test on physical calculator, then write DOCKER.md and init git.
+## Completed (last session)
+- Mixed text + math rendering pipeline (layout.h/c) — fully working
+- BFile API integration for file reading
+- UI overhaul: header/footer bars, scrollbar, file browser styling
+- Tested on fx-CG Manager PLUS emulator successfully
+
+## Current Task → ✅ Mixed rendering + UI complete
+
+## Next Task
+- Push changes to GitHub (stairona/casio-latex-viewer)
+- Test on physical calculator
+- Write DOCKER.md (Phase 5)
+
+## Open Risks
+- BFile behavior on physical hardware vs emulator not yet verified
+- Large .tex files may exceed 512K RAM
 
 ---
 

@@ -12,6 +12,7 @@ set(SOURCES
     src/main.c
     src/latex.c
     src/render.c
+    src/layout.c
     src/filebrowser.c
     src/symbols.c
 )

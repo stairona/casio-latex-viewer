@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Colors not predefined in gint */
-#define C_CYAN  C_RGB(0, 63, 31)
+/* UI colors (match main.c palette) */
+#define C_CYAN     C_RGB(0, 63, 31)
+#define C_SEL      C_RGB(4, 16, 10)
+#define C_GRAY     C_RGB(12, 24, 12)
+#define C_DARKGRAY C_RGB(6, 12, 6)
 
 #define MAX_FILES 100
 #define MAX_NAME  256
@@ -32,7 +35,7 @@ filebrowser_t *filebrowser_init(void)
     /* Scan /fls0/ for .tex files using gint BFile API.
        BFile_FindFirst expects a FONTCHARACTER (uint16_t) pattern. */
     static const uint16_t pattern[] = {
-        '/', 'f', 'l', 's', '0', '/', '*', '.', 't', 'e', 'x', 0
+        '\\', '\\', 'f', 'l', 's', '0', '\\', '*', '.', 't', 'e', 'x', 0
     };
     int shandle;
     uint16_t found[MAX_NAME];
@@ -99,23 +102,30 @@ void filebrowser_prev(filebrowser_t *fb)
 void filebrowser_draw(filebrowser_t *fb, int x, int y, int w, int h)
 {
     if (!fb || fb->count == 0) {
-        dtext(x, y, C_WHITE, "No .tex files found");
+        dtext(x + 8, y + 20, C_GRAY, "No .tex files in storage.");
+        dtext(x + 8, y + 36, C_GRAY, "Copy .tex files to calculator root.");
         return;
     }
 
-    int line_height = 12;
+    int line_height = 16;
     int visible_lines = h / line_height;
     int start_idx = (fb->current_idx / visible_lines) * visible_lines;
 
     for (int i = 0; i < visible_lines && start_idx + i < (int)fb->count; i++) {
         int idx = start_idx + i;
-        color_t color = (idx == fb->current_idx) ? C_CYAN : C_WHITE;
+        int row_y = y + i * line_height;
 
         if (idx == fb->current_idx) {
-            drect(x, y + i * line_height, x + w - 1, y + (i + 1) * line_height - 1,
-                  C_LIGHT);
+            /* Selected row: accent background + cyan left bar */
+            drect(x, row_y, x + w - 1, row_y + line_height - 2, C_SEL);
+            drect(x, row_y, x + 2, row_y + line_height - 2, C_CYAN);
+            dtext(x + 10, row_y + 3, C_CYAN, fb->files[idx]);
+        } else {
+            /* Alternating subtle background */
+            if (i % 2 == 1) {
+                drect(x, row_y, x + w - 1, row_y + line_height - 2, C_DARKGRAY);
+            }
+            dtext(x + 10, row_y + 3, C_WHITE, fb->files[idx]);
         }
-
-        dtext(x + 5, y + i * line_height + 1, color, fb->files[idx]);
     }
 }
