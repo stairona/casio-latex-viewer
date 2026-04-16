@@ -1,14 +1,8 @@
 #include "filebrowser.h"
-#include <gint/display.h>
+#include "ui.h"
 #include <gint/bfile.h>
 #include <stdlib.h>
 #include <string.h>
-
-/* UI colors (match main.c palette) */
-#define C_CYAN     C_RGB(0, 63, 31)
-#define C_SEL      C_RGB(4, 16, 10)
-#define C_GRAY     C_RGB(12, 24, 12)
-#define C_DARKGRAY C_RGB(6, 12, 6)
 
 #define MAX_FILES 100
 #define MAX_NAME  256

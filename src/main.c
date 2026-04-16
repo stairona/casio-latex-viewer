@@ -8,20 +8,7 @@
 #include "render.h"
 #include "layout.h"
 #include "filebrowser.h"
-
-/* UI color palette */
-#define C_ACCENT   C_RGB(0, 50, 28)   /* Teal accent for headers/bars */
-#define C_CYAN     C_RGB(0, 63, 31)   /* Bright cyan for highlights */
-#define C_GRAY     C_RGB(12, 24, 12)  /* Muted gray for secondary text */
-#define C_DARKGRAY C_RGB(6, 12, 6)    /* Subtle dark for backgrounds */
-#define C_SEL      C_RGB(4, 16, 10)   /* Selection highlight */
-
-/* UI layout constants */
-#define HEADER_H   24
-#define FOOTER_H   14
-#define CONTENT_Y  (HEADER_H + 1)
-#define CONTENT_H  (224 - HEADER_H - FOOTER_H - 2)
-#define SCROLLBAR_W 3
+#include "ui.h"
 
 /* App states */
 typedef enum {

@@ -26,21 +26,22 @@ Run the full Docker implementation for LaTeX Viewer with Docker Desktop data, im
 | 6 — Verify + deploy | ✅ Verified on emulator — awaiting physical calculator test |
 
 ## Completed (last session)
-- Mixed text + math rendering pipeline (layout.h/c) — fully working
-- BFile API integration for file reading
-- UI overhaul: header/footer bars, scrollbar, file browser styling
-- Tested on fx-CG Manager PLUS emulator successfully
+- New app icon: calligraphic 𝒰 on white background (92x64 color + monochrome)
+- UI color refinement: improved C_GRAY, C_DARKGRAY, C_SEL contrast values
+- Unified color palette into src/ui.h (removed duplication from main.c + filebrowser.c)
+- Docker build verified with all changes (78K .g3a)
 
-## Current Task → ✅ Mixed rendering + UI complete
+## Current Task → ✅ Icon + UI color refinement complete
 
 ## Next Task
-- Push changes to GitHub (stairona/casio-latex-viewer)
-- Test on physical calculator
+- Test on physical fx-CG50 calculator (verify icon in menu + UI rendering)
 - Write DOCKER.md (Phase 5)
+- Push changes to GitHub (stairona/casio-latex-viewer)
 
 ## Open Risks
 - BFile behavior on physical hardware vs emulator not yet verified
 - Large .tex files may exceed 512K RAM
+- Icon rendering on calculator menu not yet verified (fxgxa may handle color icon differently)
 
 ---
 
