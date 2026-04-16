@@ -1,0 +1,16 @@
+[project]
+name = "LaTeX_Viewer"
+version = "1.0"
+author = "LaTeX Viewer Developer"
+description = "View LaTeX formatted text files on Casio fx-CG50"
+
+[build]
+type = "add-in"
+target = "cg"
+
+[add-in]
+name = "LaTeX Viewer"
+short = "LaTeX"
+category = "utilities"
+icon-monotone = "assets/icon.png"
+icon-color = "assets/icon.png"

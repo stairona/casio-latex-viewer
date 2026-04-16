@@ -1,0 +1,26 @@
+# Build artifacts
+build/
+build-cg/
+build-fx/
+dist/
+
+# CMake intermediates
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Toolchain build output (built outside project root)
+x-tools/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude/AI tooling
+.claude-flow/

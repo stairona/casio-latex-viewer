@@ -1,0 +1,24 @@
+# Exclude build artifacts — Docker builds from scratch
+build/
+dist/
+
+# Exclude toolchain build dir (large, not needed in context)
+casio-toolchain/
+
+# Exclude docs — not needed inside the build container
+*.md
+*.txt
+# Re-include build files that match the above globs
+!CMakeLists.txt
+
+# Exclude macOS junk
+.DS_Store
+**/.DS_Store
+
+# Exclude editor configs
+.vscode/
+.idea/
+
+# Exclude git metadata
+.git/
+.gitignore
