@@ -4,31 +4,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-/* Lexer state */
-typedef struct {
-    const char *input;
-    size_t pos;
-    size_t len;
-} lexer_t;
-
-/* Token types */
-typedef enum {
-    TOK_EOF,
-    TOK_TEXT,
-    TOK_LBRACE,
-    TOK_RBRACE,
-    TOK_COMMAND,
-    TOK_CARET,
-    TOK_UNDERSCORE,
-    TOK_DOLLAR
-} tok_type_t;
-
-typedef struct {
-    tok_type_t type;
-    char *value;
-    size_t len;
-} token_t;
-
 /* Parser state */
 typedef struct {
     const char *input;
@@ -97,6 +72,17 @@ static node_t *make_sqrt_node(node_t *radicand)
     return n;
 }
 
+static node_t *make_matrix_node(node_t ***cells, int rows, int cols, char delim)
+{
+    node_t *n = malloc(sizeof(node_t));
+    n->type = NODE_MATRIX;
+    n->data.matrix.cells = cells;
+    n->data.matrix.rows = rows;
+    n->data.matrix.cols = cols;
+    n->data.matrix.delim = delim;
+    return n;
+}
+
 /* Skip whitespace */
 static void skip_ws(parser_t *p)
 {
@@ -119,43 +105,362 @@ static char consume(parser_t *p)
     return p->input[p->pos++];
 }
 
-/* Forward declarations for mutual recursion */
+/* Check if at string */
+static int at_str(parser_t *p, const char *s)
+{
+    size_t slen = strlen(s);
+    if (p->pos + slen > p->len) return 0;
+    return memcmp(p->input + p->pos, s, slen) == 0;
+}
+
+/* Forward declarations */
 static node_t *parse_expr(parser_t *p);
 static node_t *parse_primary(parser_t *p);
 
-/* Parse a command like \alpha or \frac */
+/* Check if command is a known function name that should render as text */
+static int is_func_name(const char *cmd)
+{
+    static const char *funcs[] = {
+        "det", "dim", "ker", "rank", "null", "span",
+        "cos", "sin", "tan", "cot", "sec", "csc",
+        "log", "ln", "exp", "lim", "min", "max",
+        "inf", "sup", "arg", "deg", "gcd", "hom",
+        "mod", "Pr", "tr", NULL
+    };
+    for (int i = 0; funcs[i]; i++) {
+        if (strcmp(cmd, funcs[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+/* Parse \begin{env} ... \end{env} matrix environment */
+static node_t *parse_matrix(parser_t *p, char delim)
+{
+    node_t ***cells = NULL;
+    int rows = 0, cols = 0;
+
+    /* Temporary storage: up to 16 rows x 16 cols */
+    node_t *tmp[16][16];
+    memset(tmp, 0, sizeof(tmp));
+    int cur_row = 0, cur_col = 0;
+    int max_col = 0;
+
+    while (p->pos < p->len) {
+        skip_ws(p);
+
+        /* Check for \end{...} */
+        if (at_str(p, "\\end{")) {
+            /* Skip past \end{...} */
+            while (p->pos < p->len && p->input[p->pos] != '}') p->pos++;
+            if (p->pos < p->len) p->pos++; /* skip } */
+            break;
+        }
+
+        /* Check for \\ (row separator) */
+        if (at_str(p, "\\\\")) {
+            p->pos += 2;
+            if (cur_col > max_col) max_col = cur_col;
+            cur_row++;
+            cur_col = 0;
+            if (cur_row >= 16) break;
+            continue;
+        }
+
+        /* Check for & (column separator) */
+        if (peek(p) == '&') {
+            p->pos++;
+            cur_col++;
+            if (cur_col >= 16) cur_col = 15;
+            continue;
+        }
+
+        /* Parse cell content until & or \\ or \end */
+        node_t **children = malloc(sizeof(node_t*) * 64);
+        size_t count = 0;
+
+        while (p->pos < p->len) {
+            skip_ws(p);
+            if (peek(p) == '&' || at_str(p, "\\\\") || at_str(p, "\\end{"))
+                break;
+            if (peek(p) == '\0' || peek(p) == '}') break;
+
+            node_t *node = parse_primary(p);
+            if (!node) break;
+
+            /* Handle scripts inline */
+            while (peek(p) == '^' || peek(p) == '_') {
+                char c = consume(p);
+                node_t *script = parse_primary(p);
+                node = make_script_node(
+                    c == '^' ? NODE_SUPERSCRIPT : NODE_SUBSCRIPT, node, script);
+            }
+
+            children[count++] = node;
+            if (count >= 64) break;
+        }
+
+        node_t *cell;
+        if (count == 0) {
+            cell = make_text_node("", 0);
+            free(children);
+        } else if (count == 1) {
+            cell = children[0];
+            free(children);
+        } else {
+            node_t *seq = malloc(sizeof(node_t));
+            seq->type = NODE_SEQ;
+            seq->data.seq.children = children;
+            seq->data.seq.count = count;
+            cell = seq;
+        }
+
+        if (cur_row < 16 && cur_col < 16) {
+            tmp[cur_row][cur_col] = cell;
+        } else {
+            latex_free(cell);
+        }
+    }
+
+    /* Finalize */
+    if (cur_col > max_col) max_col = cur_col;
+    rows = cur_row + 1;
+    cols = max_col + 1;
+    if (rows > 16) rows = 16;
+    if (cols > 16) cols = 16;
+
+    cells = malloc(sizeof(node_t**) * rows);
+    for (int r = 0; r < rows; r++) {
+        cells[r] = malloc(sizeof(node_t*) * cols);
+        for (int c = 0; c < cols; c++) {
+            cells[r][c] = tmp[r][c] ? tmp[r][c] : make_text_node("", 0);
+        }
+    }
+
+    return make_matrix_node(cells, rows, cols, delim);
+}
+
+/* Parse a brace-delimited argument: consume { ... } and return inner content */
+static node_t *parse_brace_arg(parser_t *p)
+{
+    skip_ws(p);
+    if (peek(p) == '{') {
+        consume(p);
+        node_t *expr = parse_expr(p);
+        skip_ws(p);
+        if (peek(p) == '}') consume(p);
+        return expr ? expr : make_text_node("", 0);
+    }
+    return parse_primary(p);
+}
+
+/* Parse a command like \alpha, \frac, \text, \begin */
 static node_t *parse_command(parser_t *p)
 {
     consume(p); /* consume \ */
-    
+
+    /* Handle single non-alpha chars: \, \; \! \  etc. */
+    if (p->pos < p->len && !isalpha(peek(p))) {
+        char ch = consume(p);
+        if (ch == '(' || ch == ')' || ch == '[' || ch == ']') {
+            return make_text_node("", 0);
+        }
+        if (ch == ',') return make_text_node(" ", 1);
+        if (ch == ';') return make_text_node(" ", 1);
+        if (ch == '!') return make_text_node("", 0);
+        if (ch == ' ') return make_text_node(" ", 1);
+        if (ch == '\\') return make_text_node("", 0);
+        char buf[2] = {ch, 0};
+        return make_text_node(buf, 1);
+    }
+
     char cmd[32];
     size_t len = 0;
-    
+
     while (len < sizeof(cmd) - 1 && is_command_char(peek(p))) {
         cmd[len++] = consume(p);
     }
     cmd[len] = '\0';
-    
-    /* Check for commands that take arguments */
+
+    /* \frac{num}{denom} */
     if (strcmp(cmd, "frac") == 0) {
-        node_t *num = parse_primary(p);
-        node_t *denom = parse_primary(p);
+        node_t *num = parse_brace_arg(p);
+        node_t *denom = parse_brace_arg(p);
         return make_frac_node(num, denom);
-    } else if (strcmp(cmd, "sqrt") == 0) {
-        node_t *arg = parse_primary(p);
-        return make_sqrt_node(arg);
-    } else {
-        /* Command is just a symbol/macro */
-        return make_cmd_node(cmd, NULL);
     }
+
+    /* \sqrt{...} */
+    if (strcmp(cmd, "sqrt") == 0) {
+        /* Skip optional [...] */
+        skip_ws(p);
+        if (peek(p) == '[') {
+            while (p->pos < p->len && peek(p) != ']') consume(p);
+            if (peek(p) == ']') consume(p);
+        }
+        node_t *arg = parse_brace_arg(p);
+        return make_sqrt_node(arg);
+    }
+
+    /* \text{...}, \textbf{...}, \textrm{...}, \mathrm{...} — render content as plain text */
+    if (strcmp(cmd, "text") == 0 || strcmp(cmd, "textbf") == 0 ||
+        strcmp(cmd, "textrm") == 0 || strcmp(cmd, "mathrm") == 0 ||
+        strcmp(cmd, "operatorname") == 0) {
+        skip_ws(p);
+        if (peek(p) == '{') {
+            consume(p);
+            size_t start = p->pos;
+            int depth = 1;
+            while (p->pos < p->len && depth > 0) {
+                if (p->input[p->pos] == '{') depth++;
+                else if (p->input[p->pos] == '}') depth--;
+                if (depth > 0) p->pos++;
+            }
+            size_t text_len = p->pos - start;
+            if (peek(p) == '}') consume(p);
+            return make_text_node(p->input + start, text_len);
+        }
+        return make_text_node(cmd, len);
+    }
+
+    /* \mathbb{X} — render as the letter (approximation for calculator) */
+    if (strcmp(cmd, "mathbb") == 0) {
+        skip_ws(p);
+        if (peek(p) == '{') {
+            consume(p);
+            skip_ws(p);
+            char letter = consume(p);
+            skip_ws(p);
+            if (peek(p) == '}') consume(p);
+            char buf[2] = {letter, 0};
+            return make_cmd_node("mathbb", make_text_node(buf, 1));
+        }
+        return make_text_node("B", 1);
+    }
+
+    /* \mathbf{...}, \mathcal{...} — pass through rendering content */
+    if (strcmp(cmd, "mathbf") == 0 || strcmp(cmd, "mathcal") == 0 ||
+        strcmp(cmd, "boldsymbol") == 0) {
+        node_t *arg = parse_brace_arg(p);
+        return arg ? arg : make_text_node("", 0);
+    }
+
+    /* \vec{x}, \hat{x}, \dot{x}, \ddot{x}, \bar{x}, \tilde{x} — accent commands */
+    if (strcmp(cmd, "vec") == 0 || strcmp(cmd, "hat") == 0 ||
+        strcmp(cmd, "dot") == 0 || strcmp(cmd, "ddot") == 0 ||
+        strcmp(cmd, "bar") == 0 || strcmp(cmd, "tilde") == 0 ||
+        strcmp(cmd, "overline") == 0) {
+        node_t *arg = parse_brace_arg(p);
+        return make_cmd_node(cmd, arg);
+    }
+
+    /* \left and \right — just consume the delimiter and continue */
+    if (strcmp(cmd, "left") == 0) {
+        skip_ws(p);
+        if (peek(p) == '\\') { consume(p); consume(p); }
+        else if (peek(p)) { char d = consume(p); (void)d; }
+        return make_text_node("(", 1);
+    }
+    if (strcmp(cmd, "right") == 0) {
+        skip_ws(p);
+        if (peek(p) == '\\') { consume(p); consume(p); }
+        else if (peek(p)) { char d = consume(p); (void)d; }
+        return make_text_node(")", 1);
+    }
+
+    /* \begin{env} */
+    if (strcmp(cmd, "begin") == 0) {
+        skip_ws(p);
+        if (peek(p) == '{') {
+            consume(p);
+            char env[32];
+            size_t elen = 0;
+            while (elen < 31 && p->pos < p->len && peek(p) != '}') {
+                env[elen++] = consume(p);
+            }
+            env[elen] = '\0';
+            if (peek(p) == '}') consume(p);
+
+            char delim = 0;
+            if (strcmp(env, "pmatrix") == 0) delim = '(';
+            else if (strcmp(env, "bmatrix") == 0) delim = '[';
+            else if (strcmp(env, "vmatrix") == 0) delim = '|';
+            else if (strcmp(env, "Bmatrix") == 0) delim = '{';
+            else if (strcmp(env, "matrix") == 0) delim = 0;
+            else if (strcmp(env, "cases") == 0) delim = '{';
+            else if (strcmp(env, "aligned") == 0) delim = 0;
+            else {
+                /* Unknown environment, skip to \end{env} */
+                char end_marker[48];
+                snprintf(end_marker, sizeof(end_marker), "\\end{%s}", env);
+                size_t mlen = strlen(end_marker);
+                while (p->pos < p->len) {
+                    if (p->pos + mlen <= p->len &&
+                        memcmp(p->input + p->pos, end_marker, mlen) == 0) {
+                        p->pos += mlen;
+                        break;
+                    }
+                    p->pos++;
+                }
+                return make_text_node("", 0);
+            }
+
+            return parse_matrix(p, delim);
+        }
+        return make_text_node("", 0);
+    }
+
+    /* \end{...} — shouldn't reach here, but consume gracefully */
+    if (strcmp(cmd, "end") == 0) {
+        skip_ws(p);
+        if (peek(p) == '{') {
+            while (p->pos < p->len && peek(p) != '}') consume(p);
+            if (peek(p) == '}') consume(p);
+        }
+        return make_text_node("", 0);
+    }
+
+    /* \section, \subsection, \item — skip command, render argument as text */
+    if (strcmp(cmd, "section") == 0 || strcmp(cmd, "section*") == 0 ||
+        strcmp(cmd, "subsection") == 0 || strcmp(cmd, "subsection*") == 0 ||
+        strcmp(cmd, "item") == 0) {
+        skip_ws(p);
+        if (peek(p) == '{') {
+            consume(p);
+            size_t start = p->pos;
+            int depth = 1;
+            while (p->pos < p->len && depth > 0) {
+                if (p->input[p->pos] == '{') depth++;
+                else if (p->input[p->pos] == '}') depth--;
+                if (depth > 0) p->pos++;
+            }
+            size_t text_len = p->pos - start;
+            if (peek(p) == '}') consume(p);
+            return make_text_node(p->input + start, text_len);
+        }
+        return make_text_node("", 0);
+    }
+
+    /* Function names — render as text */
+    if (is_func_name(cmd)) {
+        return make_text_node(cmd, len);
+    }
+
+    /* \quad, \qquad — spacing */
+    if (strcmp(cmd, "quad") == 0) return make_text_node("  ", 2);
+    if (strcmp(cmd, "qquad") == 0) return make_text_node("    ", 4);
+
+    /* \checkmark */
+    if (strcmp(cmd, "checkmark") == 0) return make_text_node("v", 1);
+
+    /* Default: treat as symbol */
+    return make_cmd_node(cmd, NULL);
 }
 
-/* Parse primary expression (atom or grouped expression) */
+/* Parse primary expression */
 static node_t *parse_primary(parser_t *p)
 {
     skip_ws(p);
     char c = peek(p);
-    
+
     if (c == '\0') {
         return NULL;
     } else if (c == '{') {
@@ -166,15 +471,20 @@ static node_t *parse_primary(parser_t *p)
         return make_group_node(expr);
     } else if (c == '\\') {
         return parse_command(p);
-    } else if (c == '}' || c == '_' || c == '^') {
-        return NULL;  /* Stop at these delimiters */
+    } else if (c == '}' || c == '_' || c == '^' || c == '&') {
+        return NULL;
+    } else if (c == '~') {
+        consume(p);
+        return make_text_node(" ", 1);
     } else {
         /* Parse text */
         size_t start = p->pos;
-        while (p->pos < p->len && peek(p) != '\0' && 
-               peek(p) != '{' && peek(p) != '}' && 
+        while (p->pos < p->len && peek(p) != '\0' &&
+               peek(p) != '{' && peek(p) != '}' &&
                peek(p) != '\\' && peek(p) != '_' &&
-               peek(p) != '^' && peek(p) != '$' && peek(p) != ' ') {
+               peek(p) != '^' && peek(p) != '$' &&
+               peek(p) != ' ' && peek(p) != '&' &&
+               peek(p) != '~') {
             consume(p);
         }
         return make_text_node(p->input + start, p->pos - start);
@@ -185,11 +495,11 @@ static node_t *parse_primary(parser_t *p)
 static node_t *parse_script(parser_t *p)
 {
     node_t *base = parse_primary(p);
-    
+
     while (base) {
         skip_ws(p);
         char c = peek(p);
-        
+
         if (c == '^') {
             consume(p);
             node_t *script = parse_primary(p);
@@ -202,7 +512,7 @@ static node_t *parse_script(parser_t *p)
             break;
         }
     }
-    
+
     return base;
 }
 
@@ -211,13 +521,16 @@ static node_t *parse_expr(parser_t *p)
 {
     node_t **children = malloc(sizeof(node_t*) * 256);
     size_t count = 0;
-    
+
     while (p->pos < p->len) {
         skip_ws(p);
-        
+
         char c = peek(p);
         if (c == '\0' || c == '}') break;
-        
+        if (c == '&') break;
+        if (at_str(p, "\\\\")) break;
+        if (at_str(p, "\\end{")) break;
+
         node_t *node = parse_script(p);
         if (node) {
             children[count++] = node;
@@ -225,7 +538,7 @@ static node_t *parse_expr(parser_t *p)
             break;
         }
     }
-    
+
     if (count == 0) {
         free(children);
         return NULL;
@@ -268,7 +581,7 @@ node_t *latex_parse_n(const char *input, size_t len)
 void latex_free(node_t *node)
 {
     if (!node) return;
-    
+
     switch (node->type) {
         case NODE_TEXT:
             free(node->data.text.text);
@@ -298,68 +611,23 @@ void latex_free(node_t *node)
             }
             free(node->data.seq.children);
             break;
+        case NODE_MATRIX:
+            for (int r = 0; r < node->data.matrix.rows; r++) {
+                for (int c = 0; c < node->data.matrix.cols; c++) {
+                    latex_free(node->data.matrix.cells[r][c]);
+                }
+                free(node->data.matrix.cells[r]);
+            }
+            free(node->data.matrix.cells);
+            break;
         default:
             break;
     }
-    
+
     free(node);
 }
 
 void latex_print_ast(node_t *node, int depth)
 {
-    if (!node) return;
-    
-    char indent[64];
-    memset(indent, ' ', depth * 2);
-    indent[depth * 2] = '\0';
-    
-    switch (node->type) {
-        case NODE_TEXT:
-            printf("%sTEXT: %.*s\n", indent, (int)node->data.text.len, 
-                   node->data.text.text);
-            break;
-        case NODE_COMMAND:
-            printf("%sCMD: \\%s\n", indent, node->data.cmd.name);
-            if (node->data.cmd.arg) {
-                latex_print_ast(node->data.cmd.arg, depth + 1);
-            }
-            break;
-        case NODE_GROUP:
-            printf("%sGROUP:\n", indent);
-            latex_print_ast(node->data.group.child, depth + 1);
-            break;
-        case NODE_SUBSCRIPT:
-            printf("%sSUBSCRIPT:\n", indent);
-            printf("%s  base:\n", indent);
-            latex_print_ast(node->data.script.base, depth + 2);
-            printf("%s  script:\n", indent);
-            latex_print_ast(node->data.script.script, depth + 2);
-            break;
-        case NODE_SUPERSCRIPT:
-            printf("%sSUPERSCRIPT:\n", indent);
-            printf("%s  base:\n", indent);
-            latex_print_ast(node->data.script.base, depth + 2);
-            printf("%s  script:\n", indent);
-            latex_print_ast(node->data.script.script, depth + 2);
-            break;
-        case NODE_FRACTION:
-            printf("%sFRACTION:\n", indent);
-            printf("%s  numerator:\n", indent);
-            latex_print_ast(node->data.frac.num, depth + 2);
-            printf("%s  denominator:\n", indent);
-            latex_print_ast(node->data.frac.denom, depth + 2);
-            break;
-        case NODE_SQRT:
-            printf("%sSQRT:\n", indent);
-            latex_print_ast(node->data.sqrt.radicand, depth + 1);
-            break;
-        case NODE_SEQ:
-            printf("%sSEQ (%zu children):\n", indent, node->data.seq.count);
-            for (size_t i = 0; i < node->data.seq.count; i++) {
-                latex_print_ast(node->data.seq.children[i], depth + 1);
-            }
-            break;
-        default:
-            printf("%sUNKNOWN\n", indent);
-    }
+    (void)node; (void)depth;
 }

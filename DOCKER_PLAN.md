@@ -26,24 +26,28 @@ Run the full Docker implementation for LaTeX Viewer with Docker Desktop data, im
 | 6 — Verify + deploy | ✅ Verified on emulator — awaiting physical calculator test |
 
 ## Completed (last session)
-- Phase 1: Added 49 new 8x10 bitmap symbol glyphs (total 40 → 89 symbols)
-  - Uppercase Greek, Greek variants, relations, double arrows, set/logic, calculus/misc
-- Added `\rightarrow` alias for `\to`
-- Fixed macOS `._` dot-file duplicates in file browser
-- Docker build verified (81K .g3a), tested on physical fx-CG50
+- Pushed all commits to GitHub (remote up to date at 5d550c8)
+- Analyzed `mideterm2.pdf` (Math 232 Midterm 2) — identified all missing features for exam cheat sheet
+- Gap analysis: matrix environments, function names, `\text{}`, `\mathbb{R}`, `\vec`, `\left/\right` needed
 
-## Current Task → ✅ Phase 1 symbol expansion complete
+## Current Task → ✅ Push to GitHub + gap analysis complete
 
 ## Next Task
-- Phase 2: Parser + renderer enhancements (spacing, function names, `\text{}`, `\left/\right`, accents, font styles, `\sqrt[n]{x}`, literal braces)
-- Phase 3: Environments (`\begin{matrix}`, `\begin{cases}`, `\begin{aligned}`)
+- Implement all gap features for midterm cheat sheet:
+  1. Function-name text fallthrough (`\det`, `\ker`, `\dim`, `\text{...}`) — ~30 min
+  2. `\mathbb{R}` bitmap glyph — ~15 min
+  3. Matrix environments (`\begin{pmatrix}`, `\begin{bmatrix}`, `\begin{vmatrix}`) with `&`/`\\` parsing — ~2-4 hrs
+  4. `\vec{v}` accent rendering — ~30 min
+  5. `\left( \right)` auto-sizing delimiters — ~1 hr
+- Create `midterm2_cheatsheet.tex` with all exam formulas + examples
+- Docker build + test on physical fx-CG50
 - Write DOCKER.md (Phase 5)
-- Push changes to GitHub (stairona/casio-latex-viewer)
 
 ## Open Risks
 - Large .tex files may exceed 512K RAM
-- Phase 2 parser changes may require new AST node types (environments, accents)
-- `\mathbb` glyphs (blackboard bold R, N, Z, Q, C) deferred to Phase 2 — need special font-style rendering, not just bitmap lookup
+- Matrix environment rendering requires new AST node type + 2D grid layout in renderer
+- `\mathbb` glyphs (blackboard bold R, N, Z, Q, C) need special font-style rendering, not just bitmap lookup
+- Exam deadline pressure — prioritize features that unblock the cheat sheet
 
 ---
 

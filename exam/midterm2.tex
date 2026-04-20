@@ -1,0 +1,294 @@
+\section{3.4 Matrix Operations}
+
+\subsection{Matrix Addition}
+Add entry-by-entry. Only defined when A and B have the same size.
+If A = [a_{ij}] and B = [b_{ij}] then A+B = [a_{ij} + b_{ij}].
+
+\textbf{Example:}
+[1 2; 3 4] + [5 6; 7 8] = [6 8; 10 12]
+
+\textbf{Properties:} A+B = B+A, (A+B)+C = A+(B+C),
+A + 0 = A, A + (-A) = 0.
+
+\subsection{Scalar Multiplication}
+$cA$ multiplies every entry of A by scalar $c$.
+
+\textbf{Example:} $3 \cdot [1\ 2;\ 4\ 5] = [3\ 6;\ 12\ 15]$
+
+Properties: $c(A+B) = cA+cB$, $(c+d)A = cA+dA$,
+$c(dA) = (cd)A$, $1A = A$.
+
+\subsection{Matrix Multiplication}
+$(AB)_{ij} = \sum_{k=1}^{n} a_{ik} b_{kj}$
+
+A is $m \times n$, B is $n \times p$, then AB is $m \times p$.
+The inner dimensions must match.
+
+\textbf{Example:} A = [1 2; 3 4], B = [0 1; 2 3]
+AB: row 1 of A dot cols of B:
+$(1)(0)+(2)(2) = 4$, $(1)(1)+(2)(3) = 7$
+$(3)(0)+(4)(2) = 8$, $(3)(1)+(4)(3) = 15$
+So AB = [4 7; 8 15].
+
+\textbf{Warning:} $AB \neq BA$ in general.
+Properties: $(AB)C = A(BC)$, $A(B+C) = AB+AC$,
+$AI = IA = A$.
+
+\section{3.5 Matrix Inverses}
+
+\subsection{Inverse of a 2x2 Matrix}
+For $A = [a\ b;\ c\ d]$, if $\det(A) = ad - bc \neq 0$:
+
+$A^{-1} = \frac{1}{ad-bc} [d\ -b;\ -c\ a]$
+
+\textbf{Example:} $A = [2\ 1;\ 5\ 3]$
+$\det(A) = (2)(3)-(1)(5) = 1$
+$A^{-1} = \frac{1}{1}[3\ -1;\ -5\ 2] = [3\ -1;\ -5\ 2]$
+
+Check: $AA^{-1} = [1\ 0;\ 0\ 1]$ (identity).
+
+\subsection{Row Reduction Method (any size)}
+Form the augmented matrix $[A | I]$ and row-reduce.
+When the left side becomes $I$, the right side is $A^{-1}$.
+
+\textbf{Example:} Find inverse of A = [1 2 0; 2 5 0; 3 7 1]
+
+Set up [A | I] and reduce:
+[1 2 0 | 1 0 0]
+[2 5 0 | 0 1 0]
+[3 7 1 | 0 0 1]
+
+$R_2 \to R_2 - 2R_1$: [0 1 0 | -2 1 0]
+$R_3 \to R_3 - 3R_1$: [0 1 1 | -3 0 1]
+$R_3 \to R_3 - R_2$: [0 0 1 | -1 -1 1]
+$R_1 \to R_1 - 2R_2$: [1 0 0 | 5 -2 0]
+
+So $A^{-1} = [5 -2 0; -2 1 0; -1 -1 1]$.
+
+\subsection{Theorem 7: Invertible Matrix Theorem}
+For an $n \times n$ matrix A, these are equivalent:
+A is invertible $\Leftrightarrow$ $Ax = 0$ has only trivial solution
+$\Leftrightarrow$ RREF of A is $I_n$
+$\Leftrightarrow$ A has $n$ pivot positions
+$\Leftrightarrow$ $Ax = b$ has exactly one solution for every $b$
+$\Leftrightarrow$ columns of A are linearly independent
+$\Leftrightarrow$ columns of A span $R^n$
+$\Leftrightarrow$ $\det(A) \neq 0$
+
+\section{3.6 Determinants}
+
+\subsection{2x2 Determinant}
+$\det([a\ b;\ c\ d]) = ad - bc$
+
+\textbf{Example:} $\det([3\ 2;\ 1\ 4]) = (3)(4)-(2)(1) = 10$
+
+\subsection{Cofactor Expansion}
+Cofactor $C_{ij} = (-1)^{i+j} M_{ij}$
+where $M_{ij}$ is the minor (det of matrix with row $i$, col $j$ deleted).
+
+Sign pattern: $[+ - +;\ - + -;\ + - +]$
+
+$\det(A) = a_{i1}C_{i1} + a_{i2}C_{i2} + ... + a_{in}C_{in}$
+(expand along any row or column; pick the one with most zeros!)
+
+\textbf{Example:} Expand along row 1:
+$A = [1\ 2\ 3;\ 0\ 4\ 5;\ 0\ 0\ 6]$
+$\det(A) = 1 \cdot \det([4\ 5;\ 0\ 6]) - 2 \cdot \det([0\ 5;\ 0\ 6]) + 3 \cdot \det([0\ 4;\ 0\ 0])$
+$= 1(24-0) - 2(0-0) + 3(0-0) = 24$
+For triangular matrices: $\det = $ product of diagonal entries!
+
+\textbf{Example 2:} Expand along col 1 (zeros help):
+$A = [3\ 0\ 0;\ 1\ 2\ 0;\ 4\ 5\ 6]$
+$\det(A) = 3 \cdot \det([2\ 0;\ 5\ 6]) = 3(12) = 36$
+
+\subsection{Theorem 2: Determinants and Invertibility}
+$A$ is invertible $\Leftrightarrow$ $\det(A) \neq 0$
+
+Row ops on determinant:
+$R_i \leftrightarrow R_j$: det changes sign.
+$R_i \to cR_i$: det multiplied by $c$.
+$R_i \to R_i + cR_j$: det unchanged.
+$\det(AB) = \det(A)\det(B)$
+$\det(A^{-1}) = \frac{1}{\det(A)}$
+$\det(A^T) = \det(A)$
+
+\section{4.2 Vector Spaces}
+
+\subsection{Vector Space}
+A set $V$ with addition and scalar mult satisfying 10 axioms
+(closure, commutativity, associativity, identity, inverse, distributive laws).
+Examples: $R^n$, $M_{mn}$ (matrices), polynomials, functions.
+
+\subsection{Subspace}
+$H \subseteq V$ is a subspace if:
+1. $\mathbf{0} \in H$
+2. $u, v \in H \Rightarrow u + v \in H$ (closed under addition)
+3. $u \in H, c \in R \Rightarrow cu \in H$ (closed under scalar mult)
+
+\textbf{Example:} Is $H = \{(x, y) : y = 3x\}$ a subspace of $R^2$?
+1. $(0,0)$: $0 = 3(0)$ Yes.
+2. $(x_1, 3x_1) + (x_2, 3x_2) = (x_1+x_2, 3(x_1+x_2))$ Yes.
+3. $c(x, 3x) = (cx, 3cx)$ Yes.
+So $H$ is a subspace.
+
+\textbf{Example (not a subspace):} $H = \{(x,y): y = x+1\}$
+$(0,0)$ not in $H$ (fails test 1). Not a subspace.
+
+\subsection{Solution Subspaces}
+The solution set of $Ax = 0$ (homogeneous) is a subspace of $R^n$.
+Called the null space of $A$.
+
+\textbf{Example:} $A = [1\ -2;\ 2\ -4]$
+Row reduce: $[1\ -2;\ 0\ 0]$, so $x_1 = 2x_2$, $x_2$ free.
+Solution: $t[2; 1]$, $t \in R$. This is a line through origin = subspace.
+
+\section{4.3 Span and Linear Independence}
+
+\subsection{Span}
+$\text{Span}\{v_1, ..., v_p\} = \{c_1 v_1 + ... + c_p v_p : c_i \in R\}$
+This is always a subspace.
+
+\subsection{Linear Independence}
+$\{v_1, ..., v_p\}$ is linearly independent if
+$c_1 v_1 + ... + c_p v_p = 0 \Rightarrow$ all $c_i = 0$.
+
+Otherwise linearly dependent.
+
+\textbf{Test:} Form matrix with $v_i$ as columns. Row reduce.
+If every column has a pivot $\to$ linearly independent.
+If any column is free $\to$ linearly dependent.
+
+\textbf{Example:} $v_1 = [1;2;3]$, $v_2 = [2;4;6]$
+$v_2 = 2v_1$, so dependent. $2v_1 - v_2 = 0$ (non-trivial relation).
+
+\textbf{Example 2:} $v_1 = [1;0;0]$, $v_2 = [0;1;0]$, $v_3 = [0;0;1]$
+Standard basis vectors. Matrix = $I_3$. Pivots in every col. Independent.
+
+\textbf{Key facts:}
+Any set with more vectors than entries in each vector is dependent.
+Any set containing $\mathbf{0}$ is dependent.
+A single nonzero vector is always independent.
+
+\section{4.4 Basis and Dimension}
+
+\subsection{Basis}
+A basis for subspace $H$ is a set $\{v_1, ..., v_p\}$ that:
+1. Is linearly independent
+2. Spans $H$
+
+Standard basis for $R^n$: $\{e_1, e_2, ..., e_n\}$
+
+\textbf{Finding a basis for $R^n$:}
+Columns of a matrix form a basis for their span if they are pivot columns.
+
+\textbf{Example:} $A = [1\ 2\ 0;\ 0\ 0\ 1;\ 0\ 0\ 0]$
+Pivots in columns 1 and 3.
+Basis for Col($A$) = $\{[1;0;0], [0;1;0]\}$.
+
+\textbf{Example 2 (basis for $R^3$):}
+Is $\{[1;0;0],[1;1;0],[1;1;1]\}$ a basis?
+Form matrix, $\det = 1 \neq 0$, so yes.
+
+\subsection{Dimension}
+$\dim(H)$ = number of vectors in any basis for $H$.
+$\dim(R^n) = n$, $\dim(\{0\}) = 0$.
+
+\subsection{Basis for Solution Space}
+Row reduce $A$. Write free variables parametrically.
+Each free variable gives one basis vector.
+
+\textbf{Example:} $A = [1\ 2\ -1\ 0;\ 0\ 0\ 0\ 0]$
+Free: $x_2, x_3$. $x_1 = -2x_2 + x_3$.
+$x = x_2[-2;1;0] + x_3[1;0;1]$
+Basis: $\{[-2;1;0], [1;0;1]\}$, $\dim = 2$.
+
+\section{4.5 Matrix Spaces}
+
+\subsection{Null Space}
+$\text{Nul}(A) = \{x : Ax = 0\}$ (solution set of homogeneous system).
+$\text{Nul}(A)$ is a subspace of $R^n$ (where $A$ is $m \times n$).
+Find by row reducing $[A | 0]$ and solving.
+
+\subsection{Column Space}
+$\text{Col}(A) = \text{Span of columns of }A$.
+$\text{Col}(A)$ is a subspace of $R^m$.
+Basis: pivot columns of $A$ (from ORIGINAL matrix, not RREF).
+
+\subsection{Rank}
+$\text{rank}(A) = \dim(\text{Col}(A)) = $ number of pivot columns.
+
+\subsection{Rank-Nullity Theorem}
+For $A$ of size $m \times n$:
+$\text{rank}(A) + \text{nullity}(A) = n$
+where $\text{nullity}(A) = \dim(\text{Nul}(A)) = $ number of free variables.
+
+\textbf{Example:} $A$ is $3 \times 5$, rank$(A) = 2$.
+nullity$(A) = 5 - 2 = 3$.
+$\dim(\text{Col}(A)) = 2$, $\dim(\text{Nul}(A)) = 3$.
+
+\textbf{Example 2:} $A = [1\ 0\ -2;\ 0\ 1\ 3]$
+$n = 3$, rank $= 2$ (2 pivots), nullity $= 1$.
+Free: $x_3$. Basis for Nul: $\{[2;-3;1]\}$.
+Basis for Col: $\{[1;0],[0;1]\}$ (first 2 cols of $A$).
+
+\section{5.1 Second-Order Linear DEs}
+
+\subsection{General Form}
+$ay'' + by' + cy = f(t)$
+Homogeneous when $f(t) = 0$: $ay'' + by' + cy = 0$.
+
+\subsection{Theorem 1: Superposition}
+If $y_1$ and $y_2$ are solutions of the homogeneous equation, then
+$y = c_1 y_1 + c_2 y_2$ is also a solution (for any constants $c_1, c_2$).
+
+\subsection{Theorem 4: General Solution}
+If $y_1, y_2$ are linearly independent solutions of $ay''+by'+cy=0$,
+then the \textbf{general solution} is $y = c_1 y_1 + c_2 y_2$.
+
+($y_1, y_2$ are linearly independent iff Wronskian $W(y_1,y_2) \neq 0$.)
+$W = \det([y_1\ y_2;\ y_1'\ y_2']) = y_1 y_2' - y_2 y_1'$
+
+\subsection{Constant Coefficient: Characteristic Equation}
+For $ay'' + by' + cy = 0$, try $y = e^{rt}$:
+$\Rightarrow ar^2 + br + c = 0$ (characteristic equation)
+
+\textbf{Case 1: Two real roots} $r_1 \neq r_2$
+$y = c_1 e^{r_1 t} + c_2 e^{r_2 t}$
+
+\textbf{Example:} $y'' - 5y' + 6y = 0$
+$r^2 - 5r + 6 = 0 \Rightarrow (r-2)(r-3) = 0$
+$r_1 = 2, r_2 = 3$
+$y = c_1 e^{2t} + c_2 e^{3t}$
+
+\textbf{Case 2: Repeated root} $r_1 = r_2 = r$
+$y = c_1 e^{rt} + c_2 t e^{rt} = (c_1 + c_2 t)e^{rt}$
+
+\textbf{Example:} $y'' - 4y' + 4y = 0$
+$r^2 - 4r + 4 = (r-2)^2 = 0 \Rightarrow r = 2$
+$y = (c_1 + c_2 t)e^{2t}$
+
+\textbf{Case 3: Complex roots} $r = \alpha \pm \beta i$
+$y = e^{\alpha t}(c_1 \cos(\beta t) + c_2 \sin(\beta t))$
+
+\textbf{Example:} $y'' + 4y = 0$
+$r^2 + 4 = 0 \Rightarrow r = \pm 2i$
+$\alpha = 0$, $\beta = 2$
+$y = c_1 \cos(2t) + c_2 \sin(2t)$
+
+\textbf{Example 2:} $y'' - 2y' + 5y = 0$
+$r^2 - 2r + 5 = 0$
+$r = \frac{2 \pm \sqrt{4-20}}{2} = \frac{2 \pm 4i}{2} = 1 \pm 2i$
+$y = e^{t}(c_1 \cos(2t) + c_2 \sin(2t))$
+
+\subsection{Initial Value Problems}
+Given $y(t_0) = y_0$ and $y'(t_0) = y_1$, plug into general solution
+and derivative to get a 2x2 system for $c_1, c_2$.
+
+\textbf{Example:} $y'' - y = 0$, $y(0)=2$, $y'(0)=1$
+$r^2 - 1 = 0 \Rightarrow r = \pm 1$
+$y = c_1 e^t + c_2 e^{-t}$
+$y' = c_1 e^t - c_2 e^{-t}$
+$y(0): c_1 + c_2 = 2$
+$y'(0): c_1 - c_2 = 1$
+$\Rightarrow c_1 = \frac{3}{2}$, $c_2 = \frac{1}{2}$
+$y = \frac{3}{2}e^t + \frac{1}{2}e^{-t}$

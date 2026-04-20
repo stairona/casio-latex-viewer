@@ -13,7 +13,8 @@ typedef enum {
     NODE_SUPERSCRIPT,
     NODE_FRACTION,
     NODE_SQRT,
-    NODE_SEQ
+    NODE_SEQ,
+    NODE_MATRIX
 } node_type_t;
 
 /* Forward declarations */
@@ -49,6 +50,12 @@ struct node {
             node_t **children;
             size_t count;
         } seq;
+        struct {
+            node_t ***cells;    /* cells[row][col] */
+            int rows;
+            int cols;
+            char delim;         /* '(' = pmatrix, '[' = bmatrix, '|' = vmatrix, 0 = plain */
+        } matrix;
     } data;
 };
 

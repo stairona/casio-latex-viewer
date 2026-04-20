@@ -127,34 +127,55 @@ static enum symbol_id cmd_to_symbol(const char *name)
     return SYM_COUNT;  /* Not found */
 }
 
+/* Check if command is an accent that draws over its argument */
+static int is_accent_cmd(const char *name)
+{
+    return strcmp(name, "vec") == 0 || strcmp(name, "hat") == 0 ||
+           strcmp(name, "dot") == 0 || strcmp(name, "ddot") == 0 ||
+           strcmp(name, "bar") == 0 || strcmp(name, "tilde") == 0 ||
+           strcmp(name, "overline") == 0;
+}
+
 /* Measure a single node */
 static render_size_t measure_node(node_t *node, int scale)
 {
     render_size_t size = {0, 0, 0};
-    
+
     if (!node) return size;
-    
+
     int cw = get_char_width(scale);
     int ch = get_char_height(scale);
     int baseline = get_baseline(scale);
-    
+
     switch (node->type) {
         case NODE_TEXT: {
-            size.width = node->data.text.len * cw;
+            size.width = node->data.text.len * CHAR_WIDTH;
             size.height = ch;
             size.baseline = baseline;
             break;
         }
         case NODE_COMMAND: {
-            enum symbol_id sym = cmd_to_symbol(node->data.cmd.name);
-            if (sym != SYM_COUNT) {
-                size.width = cw;
-                size.height = ch;
+            if (is_accent_cmd(node->data.cmd.name) && node->data.cmd.arg) {
+                render_size_t arg_size = measure_node(node->data.cmd.arg, scale);
+                size.width = arg_size.width;
+                size.height = arg_size.height + 3;
+                size.baseline = arg_size.baseline + 3;
+            } else if (strcmp(node->data.cmd.name, "mathbb") == 0 && node->data.cmd.arg) {
+                render_size_t arg_size = measure_node(node->data.cmd.arg, scale);
+                size.width = arg_size.width;
+                size.height = arg_size.height;
+                size.baseline = arg_size.baseline;
             } else {
-                size.width = cw;
-                size.height = ch;
+                enum symbol_id sym = cmd_to_symbol(node->data.cmd.name);
+                if (sym != SYM_COUNT) {
+                    size.width = CHAR_WIDTH;
+                    size.height = CHAR_HEIGHT;
+                } else {
+                    size.width = CHAR_WIDTH;
+                    size.height = CHAR_HEIGHT;
+                }
             }
-            size.baseline = baseline;
+            size.baseline = size.baseline > 0 ? size.baseline : baseline;
             break;
         }
         case NODE_GROUP: {
@@ -163,22 +184,19 @@ static render_size_t measure_node(node_t *node, int scale)
         }
         case NODE_SUBSCRIPT: {
             render_size_t base = measure_node(node->data.script.base, scale);
-            int script_scale = (scale * SCALE_SCRIPT) / SCALE_NORMAL;
-            if (script_scale < SCALE_SS) script_scale = SCALE_SS;
-            render_size_t script = measure_node(node->data.script.script, script_scale);
-            
+            render_size_t script = measure_node(node->data.script.script, scale);
+
+            int sub_drop = (CHAR_HEIGHT * 4) / 10;
             size.width = base.width + script.width;
-            size.height = base.height;
+            size.height = base.height + sub_drop;
             size.baseline = base.baseline;
             break;
         }
         case NODE_SUPERSCRIPT: {
             render_size_t base = measure_node(node->data.script.base, scale);
-            int script_scale = (scale * SCALE_SCRIPT) / SCALE_NORMAL;
-            if (script_scale < SCALE_SS) script_scale = SCALE_SS;
-            render_size_t script = measure_node(node->data.script.script, script_scale);
-            
-            int rise = (ch * 4) / 10;  /* Rise superscript */
+            render_size_t script = measure_node(node->data.script.script, scale);
+
+            int rise = (CHAR_HEIGHT * 4) / 10;
             size.width = base.width + script.width;
             size.height = base.height + rise;
             size.baseline = base.baseline + rise;
@@ -205,18 +223,52 @@ static render_size_t measure_node(node_t *node, int scale)
             size.baseline = get_baseline(scale);
             break;
         }
+        case NODE_MATRIX: {
+            int rows = node->data.matrix.rows;
+            int cols = node->data.matrix.cols;
+            int col_widths[16] = {0};
+            int row_heights[16] = {0};
+            int cell_pad = 6;
+            int delim_width = (node->data.matrix.delim != 0) ? 5 : 0;
+
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    render_size_t cs = measure_node(node->data.matrix.cells[r][c], scale);
+                    if (cs.width > col_widths[c]) col_widths[c] = cs.width;
+                    if (cs.height > row_heights[r]) row_heights[r] = cs.height;
+                }
+                if (row_heights[r] < CHAR_HEIGHT) row_heights[r] = CHAR_HEIGHT;
+            }
+            for (int c = 0; c < cols; c++) {
+                if (col_widths[c] < CHAR_WIDTH) col_widths[c] = CHAR_WIDTH;
+            }
+
+            int total_w = 0;
+            for (int c = 0; c < cols; c++) total_w += col_widths[c];
+            total_w += (cols - 1) * cell_pad;
+            total_w += delim_width * 2;
+
+            int total_h = 0;
+            for (int r = 0; r < rows; r++) total_h += row_heights[r];
+            total_h += (rows - 1) * 3;
+
+            size.width = total_w;
+            size.height = total_h;
+            size.baseline = total_h / 2;
+            break;
+        }
         case NODE_SEQ: {
             int total_width = 0;
             int max_height = 0;
             int max_baseline = 0;
-            
+
             for (size_t i = 0; i < node->data.seq.count; i++) {
                 render_size_t child = measure_node(node->data.seq.children[i], scale);
                 total_width += child.width;
                 if (child.height > max_height) max_height = child.height;
                 if (child.baseline > max_baseline) max_baseline = child.baseline;
             }
-            
+
             size.width = total_width;
             size.height = max_height;
             size.baseline = max_baseline;
@@ -225,7 +277,7 @@ static render_size_t measure_node(node_t *node, int scale)
         default:
             break;
     }
-    
+
     return size;
 }
 
@@ -233,22 +285,51 @@ static render_size_t measure_node(node_t *node, int scale)
 static void draw_node(node_t *node, int x, int y, int scale, color_t color)
 {
     if (!node) return;
-    
+
     int cw = get_char_width(scale);
-    int ch = get_char_height(scale);
-    
+
     switch (node->type) {
         case NODE_TEXT: {
             dtext(x, y, color, node->data.text.text);
             break;
         }
         case NODE_COMMAND: {
-            enum symbol_id sym = cmd_to_symbol(node->data.cmd.name);
-            if (sym != SYM_COUNT) {
-                draw_symbol(x, y, sym, color);
+            if (is_accent_cmd(node->data.cmd.name) && node->data.cmd.arg) {
+                render_size_t arg_size = measure_node(node->data.cmd.arg, scale);
+                draw_node(node->data.cmd.arg, x, y + 3, scale, color);
+                int ax = x;
+                int aw = arg_size.width > 0 ? arg_size.width : cw;
+                int mid = ax + aw / 2;
+                if (strcmp(node->data.cmd.name, "vec") == 0) {
+                    dline(ax, y + 1, ax + aw - 1, y + 1, color);
+                    dpixel(ax + aw - 2, y, color);
+                    dpixel(ax + aw - 2, y + 2, color);
+                } else if (strcmp(node->data.cmd.name, "hat") == 0) {
+                    dpixel(mid, y, color);
+                    dpixel(mid - 1, y + 1, color);
+                    dpixel(mid + 1, y + 1, color);
+                } else if (strcmp(node->data.cmd.name, "dot") == 0) {
+                    dpixel(mid, y, color);
+                } else if (strcmp(node->data.cmd.name, "ddot") == 0) {
+                    dpixel(mid - 1, y, color);
+                    dpixel(mid + 1, y, color);
+                } else if (strcmp(node->data.cmd.name, "tilde") == 0) {
+                    dpixel(mid - 1, y + 1, color);
+                    dpixel(mid, y, color);
+                    dpixel(mid + 1, y + 1, color);
+                } else {
+                    dline(ax, y + 1, ax + aw - 1, y + 1, color);
+                }
+            } else if (strcmp(node->data.cmd.name, "mathbb") == 0 && node->data.cmd.arg) {
+                draw_node(node->data.cmd.arg, x, y, scale, color);
+                draw_node(node->data.cmd.arg, x + 1, y, scale, color);
             } else {
-                /* Unknown command, draw as text */
-                dtext(x, y, color, "?");
+                enum symbol_id sym = cmd_to_symbol(node->data.cmd.name);
+                if (sym != SYM_COUNT) {
+                    draw_symbol(x, y, sym, color);
+                } else {
+                    dtext(x, y, color, "?");
+                }
             }
             break;
         }
@@ -259,22 +340,19 @@ static void draw_node(node_t *node, int x, int y, int scale, color_t color)
         case NODE_SUBSCRIPT: {
             render_size_t base = measure_node(node->data.script.base, scale);
             draw_node(node->data.script.base, x, y, scale, color);
-            
-            int script_scale = (scale * SCALE_SCRIPT) / SCALE_NORMAL;
-            if (script_scale < SCALE_SS) script_scale = SCALE_SS;
-            draw_node(node->data.script.script, x + base.width, y + (ch * 4) / 10, 
-                     script_scale, color);
+
+            int sub_y = y + (CHAR_HEIGHT * 4) / 10;
+            draw_node(node->data.script.script, x + base.width, sub_y,
+                     scale, color);
             break;
         }
         case NODE_SUPERSCRIPT: {
             render_size_t base = measure_node(node->data.script.base, scale);
             draw_node(node->data.script.base, x, y, scale, color);
-            
-            int script_scale = (scale * SCALE_SCRIPT) / SCALE_NORMAL;
-            if (script_scale < SCALE_SS) script_scale = SCALE_SS;
-            int rise = (ch * 4) / 10;
-            draw_node(node->data.script.script, x + base.width, y - rise, 
-                     script_scale, color);
+
+            int rise = (CHAR_HEIGHT * 4) / 10;
+            draw_node(node->data.script.script, x + base.width, y - rise,
+                     scale, color);
             break;
         }
         case NODE_FRACTION: {
@@ -309,6 +387,95 @@ static void draw_node(node_t *node, int x, int y, int scale, color_t color)
             }
             
             draw_node(node->data.sqrt.radicand, x + radical_width + 1, y, scale, color);
+            break;
+        }
+        case NODE_MATRIX: {
+            int rows = node->data.matrix.rows;
+            int cols = node->data.matrix.cols;
+            int col_widths[16] = {0};
+            int row_heights[16] = {0};
+            int cell_pad = 6;
+            int delim_width = (node->data.matrix.delim != 0) ? 5 : 0;
+
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    render_size_t cs = measure_node(node->data.matrix.cells[r][c], scale);
+                    if (cs.width > col_widths[c]) col_widths[c] = cs.width;
+                    if (cs.height > row_heights[r]) row_heights[r] = cs.height;
+                }
+                if (row_heights[r] < CHAR_HEIGHT) row_heights[r] = CHAR_HEIGHT;
+            }
+            for (int c = 0; c < cols; c++) {
+                if (col_widths[c] < CHAR_WIDTH) col_widths[c] = CHAR_WIDTH;
+            }
+
+            int total_h = 0;
+            for (int r = 0; r < rows; r++) total_h += row_heights[r];
+            total_h += (rows - 1) * 3;
+
+            int total_w = 0;
+            for (int c = 0; c < cols; c++) total_w += col_widths[c];
+            total_w += (cols - 1) * cell_pad;
+
+            int dx = x + delim_width;
+            int dy = y;
+            for (int r = 0; r < rows; r++) {
+                int cx = dx;
+                for (int c = 0; c < cols; c++) {
+                    draw_node(node->data.matrix.cells[r][c], cx, dy, scale, color);
+                    cx += col_widths[c] + cell_pad;
+                }
+                dy += row_heights[r] + 3;
+            }
+
+            if (node->data.matrix.delim) {
+                char d = node->data.matrix.delim;
+                int lx = x;
+                int rx = x + delim_width + total_w + 2;
+
+                if (d == '(') {
+                    dpixel(lx + 3, y, color);
+                    dpixel(lx + 2, y + 1, color);
+                    for (int i = 2; i < total_h - 2; i++)
+                        dpixel(lx + 1, y + i, color);
+                    dpixel(lx + 2, y + total_h - 2, color);
+                    dpixel(lx + 3, y + total_h - 1, color);
+
+                    dpixel(rx, y, color);
+                    dpixel(rx + 1, y + 1, color);
+                    for (int i = 2; i < total_h - 2; i++)
+                        dpixel(rx + 2, y + i, color);
+                    dpixel(rx + 1, y + total_h - 2, color);
+                    dpixel(rx, y + total_h - 1, color);
+                } else if (d == '[') {
+                    dline(lx + 1, y, lx + 3, y, color);
+                    for (int i = 0; i < total_h; i++)
+                        dpixel(lx + 1, y + i, color);
+                    dline(lx + 1, y + total_h - 1, lx + 3, y + total_h - 1, color);
+
+                    dline(rx, y, rx + 2, y, color);
+                    for (int i = 0; i < total_h; i++)
+                        dpixel(rx + 2, y + i, color);
+                    dline(rx, y + total_h - 1, rx + 2, y + total_h - 1, color);
+                } else if (d == '|') {
+                    for (int i = 0; i < total_h; i++) {
+                        dpixel(lx + 2, y + i, color);
+                        dpixel(rx + 1, y + i, color);
+                    }
+                } else if (d == '{') {
+                    for (int i = 0; i < total_h; i++)
+                        dpixel(lx + 2, y + i, color);
+                    dpixel(lx + 1, y + total_h / 2, color);
+                    dpixel(lx + 3, y, color);
+                    dpixel(lx + 3, y + total_h - 1, color);
+
+                    for (int i = 0; i < total_h; i++)
+                        dpixel(rx + 1, y + i, color);
+                    dpixel(rx + 2, y + total_h / 2, color);
+                    dpixel(rx, y, color);
+                    dpixel(rx, y + total_h - 1, color);
+                }
+            }
             break;
         }
         case NODE_SEQ: {

@@ -1,0 +1,282 @@
+== 3.4 MATRIX OPERATIONS ==
+
+Matrix Addition (same size only, add entry by entry):
+$$A + B = [a_{ij} + b_{ij}]$$
+
+Example: [1 2 / 3 4] + [5 6 / 7 8] = [6 8 / 10 12]
+
+Properties:
+$$A+B = B+A$$
+$$(A+B)+C = A+(B+C)$$
+
+Scalar Multiplication (multiply every entry by c):
+$$cA = [c \cdot a_{ij}]$$
+
+Matrix Multiplication (A is m x n, B is n x p):
+$$(AB)_{ij} = \sum_{k=1}^{n} a_{ik} b_{kj}$$
+
+Example: A=[1 2/3 4], B=[0 1/2 3]
+Row1*Col1: (1)(0)+(2)(2)=4
+Row1*Col2: (1)(1)+(2)(3)=7
+Row2*Col1: (3)(0)+(4)(2)=8
+Row2*Col2: (3)(1)+(4)(3)=15
+Result: AB=[4 7/8 15]
+
+WARNING: AB is generally NOT equal to BA
+
+Properties:
+$$(AB)C = A(BC)$$
+$$A(B+C) = AB+AC$$
+$$AI = IA = A$$
+
+
+== 3.5 MATRIX INVERSES ==
+
+2x2 Inverse Formula:
+If A=[a b/c d] and det(A)=ad-bc is not 0:
+$$A^{-1} = \frac{1}{ad-bc}\begin{pmatrix}d & -b \\ -c & a\end{pmatrix}$$
+
+Example: A=[2 1/5 3], det=(2)(3)-(1)(5)=1
+$$A^{-1} = [3\ -1\ /\ -5\ 2]$$
+
+Check: A times A^{-1} = identity matrix.
+
+Row Reduction Method (works for any size):
+Form [A|I] and row reduce until left side = I.
+Right side becomes A^{-1}.
+
+Example: A=[1 2 0/2 5 0/3 7 1]
+R2=R2-2R1: [0 1 0|-2 1 0]
+R3=R3-3R1: [0 1 1|-3 0 1]
+R3=R3-R2:  [0 0 1|-1 -1 1]
+R1=R1-2R2: [1 0 0|5 -2 0]
+Result: A^{-1}=[5 -2 0/-2 1 0/-1 -1 1]
+
+Theorem 7 (all equivalent for n x n matrix A):
+$$A \text{ invertible} \Leftrightarrow Ax=0 \text{ has only trivial soln}$$
+$$\Leftrightarrow \text{RREF of A is } I_n$$
+$$\Leftrightarrow A \text{ has n pivot positions}$$
+$$\Leftrightarrow Ax=b \text{ has exactly one solution}$$
+$$\Leftrightarrow \text{columns linearly independent}$$
+$$\Leftrightarrow \det(A) \neq 0$$
+
+
+== 3.6 DETERMINANTS ==
+
+2x2 Formula:
+$$\det\begin{pmatrix}a & b \\ c & d\end{pmatrix} = ad - bc$$
+
+Example:
+$$\det\begin{pmatrix}3 & 2 \\ 1 & 4\end{pmatrix} = (3)(4)-(2)(1) = 10$$
+
+Cofactor Expansion:
+$$C_{ij} = (-1)^{i+j} M_{ij}$$
+
+M_ij = det with row i and col j deleted.
+
+Sign pattern (+/-) for 3x3:
+$$\begin{pmatrix}+ & - & + \\ - & + & - \\ + & - & +\end{pmatrix}$$
+
+Expanding along row i:
+$$\det(A) = a_{i1}C_{i1} + a_{i2}C_{i2} + a_{i3}C_{i3}$$
+
+TIP: pick the row or col with the most zeros!
+
+Example (expand along row 1):
+A = [1 2 3 / 0 4 5 / 0 0 6]
+$$= 1\cdot\det\begin{pmatrix}4&5\\0&6\end{pmatrix} - 2\cdot\det\begin{pmatrix}0&5\\0&6\end{pmatrix} + 3\cdot\det\begin{pmatrix}0&4\\0&0\end{pmatrix}$$
+$$= 1(24) - 2(0) + 3(0) = 24$$
+
+Shortcut: triangular matrix det = product of diagonals.
+
+Row Operation Effects on det:
+$$R_i \leftrightarrow R_j \Rightarrow \text{det changes sign}$$
+$$R_i \to cR_i \Rightarrow \text{det multiplied by } c$$
+$$R_i \to R_i + cR_j \Rightarrow \text{det unchanged}$$
+
+Theorem 2:
+$$A \text{ invertible} \Leftrightarrow \det(A) \neq 0$$
+$$\det(AB) = \det(A)\det(B)$$
+$$\det(A^{-1}) = \frac{1}{\det(A)}$$
+$$\det(A^T) = \det(A)$$
+
+
+== 4.2 VECTOR SPACES ==
+
+A vector space V satisfies 10 axioms (closure, identity,
+inverse, distributive, associative laws, etc.)
+Examples: R^n, all m x n matrices, polynomials, functions.
+
+Subspace Test (H is a subspace of V if ALL 3 hold):
+1. Zero vector 0 is in H
+2. u,v in H implies u+v in H (closed under addition)
+3. u in H, c in R implies cu in H (closed under scalar mult)
+
+Example (IS a subspace): H={(x,y): y=3x} in R^2
+$$0: 0=3(0)\ \checkmark$$
+$$(x_1+x_2, 3x_1+3x_2) = (x_1+x_2, 3(x_1+x_2))\ \checkmark$$
+$$c(x,3x)=(cx,3cx)\ \checkmark$$
+
+Example (NOT a subspace): H={(x,y): y=x+1}
+(0,0) not in H. Fails test 1. Not a subspace.
+
+Solution Subspaces:
+The solution set of Ax=0 is always a subspace (= Nul(A)).
+
+Example: A=[1 -2/2 -4]
+Row reduce: [1 -2/0 0], so x1=2x2, x2 free.
+$$\text{Solution: } t\begin{pmatrix}2\\1\end{pmatrix}, t \in \mathbb{R}$$
+This is a line through origin, which is a subspace.
+
+
+== 4.3 SPAN AND LINEAR INDEPENDENCE ==
+
+Span:
+$$\text{Span}\{v_1,...,v_p\} = \{c_1v_1+...+c_pv_p : c_i \in \mathbb{R}\}$$
+
+This is always a subspace.
+
+Linear Independence:
+{v1,...,vp} is linearly independent if:
+$$c_1v_1+...+c_pv_p = 0 \Rightarrow \text{all } c_i = 0$$
+
+Test: form matrix with vi as columns and row reduce.
+Every column has a pivot => independent.
+Any free column => dependent.
+
+Example (dependent): v1=[1/2/3], v2=[2/4/6]
+v2 = 2*v1, so dependent (2v1 - v2 = 0).
+
+Example (independent): v1=[1/0/0], v2=[0/1/0], v3=[0/0/1]
+Matrix = I_3. All pivots. Independent.
+
+Key Facts:
+More vectors than entries in each => always dependent.
+Set containing 0 => always dependent.
+Single nonzero vector => always independent.
+
+
+== 4.4 BASIS AND DIMENSION ==
+
+A basis for subspace H is a set {v1,...,vp} that is:
+(1) linearly independent  AND  (2) spans H.
+
+Standard basis for R^n: {e1, e2, ..., en}
+
+Finding basis for Col(A):
+Row reduce A. Pivot columns of ORIGINAL A form a basis.
+
+Example: A=[1 2 0/0 0 1/0 0 0]
+Pivots in columns 1 and 3.
+$$\text{Basis for Col}(A) = \left\{\begin{pmatrix}1\\0\\0\end{pmatrix}, \begin{pmatrix}0\\1\\0\end{pmatrix}\right\}$$
+
+Example 2: Is {[1/0/0],[1/1/0],[1/1/1]} a basis for R^3?
+$$\det = 1 \neq 0 \Rightarrow \text{Yes, it is a basis.}$$
+
+Dimension:
+$$\dim(H) = \text{number of vectors in any basis for } H$$
+$$\dim(R^n) = n, \quad \dim(\{0\}) = 0$$
+
+Basis for Solution Space:
+Row reduce A. Express basic vars in terms of free vars.
+Each free variable gives one basis vector.
+
+Example: A=[1 2 -1 0/0 0 0 0]
+Free: x2, x3. Basic: x1 = -2x2 + x3.
+$$x = x_2\begin{pmatrix}-2\\1\\0\end{pmatrix} + x_3\begin{pmatrix}1\\0\\1\end{pmatrix}$$
+$$\text{Basis: } \{[-2,1,0]^T,\ [1,0,1]^T\}, \quad \dim = 2$$
+
+
+== 4.5 MATRIX SPACES ==
+
+Null Space of A (m x n matrix):
+$$\text{Nul}(A) = \{x : Ax = 0\}$$
+
+Subspace of R^n. Find by row reducing [A|0].
+
+Column Space of A:
+$$\text{Col}(A) = \text{Span of columns of } A$$
+
+Subspace of R^m.
+Basis = pivot columns of ORIGINAL A (not RREF!).
+
+Rank:
+$$\text{rank}(A) = \dim(\text{Col}(A)) = \text{number of pivot columns}$$
+
+Rank-Nullity Theorem (A is m x n):
+$$\text{rank}(A) + \text{nullity}(A) = n$$
+
+nullity(A) = dim(Nul(A)) = number of free variables.
+
+Example 1: A is 3x5, rank(A)=2
+$$\text{nullity}(A) = 5 - 2 = 3$$
+
+Example 2: A=[1 0 -2/0 1 3]
+n=3, rank=2, nullity=1.
+Free: x3. Solve: x1=2x3, x2=-3x3.
+$$\text{Basis for Nul}(A): \{[2,-3,1]^T\}$$
+$$\text{Basis for Col}(A): \{[1,0]^T, [0,1]^T\}$$
+
+
+== 5.1 SECOND-ORDER LINEAR DEs ==
+
+General Form:
+$$ay'' + by' + cy = f(t)$$
+
+Homogeneous when f(t)=0:
+$$ay'' + by' + cy = 0$$
+
+Theorem 1 (Superposition):
+If y1 and y2 solve the homogeneous equation, then:
+$$y = c_1y_1 + c_2y_2 \text{ is also a solution}$$
+
+Theorem 4 (General Solution):
+If y1, y2 are linearly independent solutions:
+$$y = c_1y_1 + c_2y_2 \text{ is the GENERAL solution}$$
+
+Wronskian (check linear independence):
+$$W(y_1,y_2) = y_1y_2' - y_2y_1' \neq 0$$
+
+Characteristic Equation Method:
+Substitute y=e^{rt} into ay''+by'+cy=0 to get:
+$$ar^2 + br + c = 0$$
+
+--- CASE 1: Two distinct real roots r1 != r2 ---
+$$y = c_1e^{r_1 t} + c_2e^{r_2 t}$$
+
+Example: y'' - 5y' + 6y = 0
+$$r^2 - 5r + 6 = (r-2)(r-3) = 0$$
+$$r_1=2,\ r_2=3$$
+$$y = c_1e^{2t} + c_2e^{3t}$$
+
+--- CASE 2: Repeated root r1=r2=r ---
+$$y = (c_1 + c_2t)e^{rt}$$
+
+Example: y'' - 4y' + 4y = 0
+$$r^2 - 4r + 4 = (r-2)^2 = 0 \Rightarrow r=2$$
+$$y = (c_1 + c_2t)e^{2t}$$
+
+--- CASE 3: Complex roots r = alpha +/- beta*i ---
+$$y = e^{\alpha t}(c_1\cos(\beta t) + c_2\sin(\beta t))$$
+
+Example 1: y'' + 4y = 0
+$$r^2 + 4 = 0 \Rightarrow r = \pm 2i$$
+$$\alpha=0,\ \beta=2$$
+$$y = c_1\cos(2t) + c_2\sin(2t)$$
+
+Example 2: y'' - 2y' + 5y = 0
+$$r = \frac{2 \pm \sqrt{4-20}}{2} = \frac{2 \pm 4i}{2} = 1 \pm 2i$$
+$$\alpha=1,\ \beta=2$$
+$$y = e^{t}(c_1\cos(2t) + c_2\sin(2t))$$
+
+--- Initial Value Problems ---
+Write general y and y'. Plug in t0. Solve 2x2 system for c1, c2.
+
+Example: y'' - y = 0, y(0)=2, y'(0)=1
+$$r^2 - 1 = 0 \Rightarrow r = \pm 1$$
+$$y = c_1e^{t} + c_2e^{-t}$$
+$$y' = c_1e^{t} - c_2e^{-t}$$
+At t=0:
+$$c_1 + c_2 = 2 \quad \text{and} \quad c_1 - c_2 = 1$$
+$$c_1 = \frac{3}{2},\ c_2 = \frac{1}{2}$$
+$$y = \frac{3}{2}e^{t} + \frac{1}{2}e^{-t}$$

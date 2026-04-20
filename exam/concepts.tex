@@ -1,0 +1,113 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=0.5in]{geometry}
+
+\begin{document}
+\small
+
+\section*{Midterm 2 Cheat Sheet — Concepts}
+
+\subsection*{3.4 Matrix Operations}
+\textbf{Matrix Addition:}
+\[
+A + B = (a_{ij} + b_{ij})
+\]
+
+\textbf{Scalar Multiplication:}
+\[
+cA = (c a_{ij})
+\]
+
+\textbf{Matrix Multiplication:}
+\[
+(AB)_{ij} = \sum_{k} a_{ik} b_{kj}
+\]
+
+\subsection*{3.5 Matrix Inverses}
+\textbf{2×2 Inverse:}
+\[
+A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}, \quad
+A^{-1} = \frac{1}{ad - bc}
+\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}
+\]
+
+\textbf{Invertible Matrix Conditions:}
+\begin{itemize}
+\item $\det(A) \neq 0$
+\item $A^{-1}$ exists
+\item Columns are linearly independent
+\end{itemize}
+
+\subsection*{3.6 Determinants}
+\textbf{2×2 Determinant:}
+\[
+\det(A) = ad - bc
+\]
+
+\textbf{Cofactor Expansion:}
+\[
+\det(A) = \sum a_{ij} C_{ij}
+\]
+
+\subsection*{4.2 Vector Spaces}
+\textbf{Vector Space:}
+Closed under addition and scalar multiplication.
+
+\textbf{Subspace:}
+\begin{itemize}
+\item Contains zero vector
+\item Closed under addition
+\item Closed under scalar multiplication
+\end{itemize}
+
+\subsection*{4.3 Span \& Linear Independence}
+\textbf{Span:}
+\[
+\text{Span}\{v_1, v_2\} = c_1 v_1 + c_2 v_2
+\]
+
+\textbf{Linear Independence:}
+\[
+c_1 v_1 + c_2 v_2 = 0 \Rightarrow c_1 = c_2 = 0
+\]
+
+\subsection*{4.4 Basis \& Dimension}
+\textbf{Basis:}
+Linearly independent set that spans space.
+
+\textbf{Dimension:}
+Number of vectors in basis.
+
+\subsection*{4.5 Matrix Spaces}
+\textbf{Null Space:}
+\[
+Ax = 0
+\]
+
+\textbf{Rank:}
+Number of pivot columns.
+
+\textbf{Rank-Nullity:}
+\[
+\text{rank}(A) + \text{nullity}(A) = n
+\]
+
+\subsection*{5.1 Differential Equations}
+\textbf{General Form:}
+\[
+y'' + ay' + by = 0
+\]
+
+\textbf{Characteristic Equation:}
+\[
+r^2 + ar + b = 0
+\]
+
+\textbf{Solutions:}
+\begin{itemize}
+\item Distinct roots: $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$
+\item Repeated: $y = (c_1 + c_2 x)e^{rx}$
+\item Complex: $y = e^{\alpha x}(c_1 \cos \beta x + c_2 \sin \beta x)$
+\end{itemize}
+
+\end{document}

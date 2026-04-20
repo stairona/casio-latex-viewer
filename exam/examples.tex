@@ -1,0 +1,80 @@
+\documentclass[10pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=0.5in]{geometry}
+
+\begin{document}
+\small
+
+\section*{Midterm 2 Cheat Sheet — Examples}
+
+\subsection*{Matrix Multiplication}
+\[
+A = \begin{bmatrix}1 & 2 \\ 3 & 4\end{bmatrix}, 
+B = \begin{bmatrix}5 & 6 \\ 7 & 8\end{bmatrix}
+\]
+
+\[
+AB = \begin{bmatrix}
+(1)(5)+(2)(7) & (1)(6)+(2)(8) \\
+(3)(5)+(4)(7) & (3)(6)+(4)(8)
+\end{bmatrix}
+=
+\begin{bmatrix}19 & 22 \\ 43 & 50\end{bmatrix}
+\]
+
+\subsection*{Inverse of 2×2}
+\[
+A = \begin{bmatrix}2 & 1 \\ 5 & 3\end{bmatrix}
+\]
+
+\[
+A^{-1} = \frac{1}{(2)(3)-(1)(5)}
+\begin{bmatrix}3 & -1 \\ -5 & 2\end{bmatrix}
+= \begin{bmatrix}3 & -1 \\ -5 & 2\end{bmatrix}
+\]
+
+\subsection*{Determinant}
+\[
+\det \begin{bmatrix}2 & 3 \\ 1 & 4\end{bmatrix}
+= (2)(4)-(3)(1)=5
+\]
+
+\subsection*{Linear Independence}
+\[
+c_1\begin{bmatrix}1 \\ 2\end{bmatrix}
++ c_2\begin{bmatrix}2 \\ 4\end{bmatrix} = 0
+\Rightarrow \text{dependent}
+\]
+
+\subsection*{Basis}
+\[
+\left\{
+\begin{bmatrix}1 \\ 0\end{bmatrix},
+\begin{bmatrix}0 \\ 1\end{bmatrix}
+\right\}
+\]
+
+\subsection*{Rank Example}
+\[
+A =
+\begin{bmatrix}
+1 & 2 \\
+2 & 4
+\end{bmatrix}
+\Rightarrow \text{rank} = 1
+\]
+
+\subsection*{Differential Equation}
+\[
+y'' - 3y' + 2y = 0
+\]
+
+\[
+r^2 - 3r + 2 = 0 \Rightarrow r=1,2
+\]
+
+\[
+y = c_1 e^x + c_2 e^{2x}
+\]
+
+\end{document}
