@@ -64,10 +64,66 @@ static enum symbol_id cmd_to_symbol(const char *name)
     if (strcmp(name, "neq") == 0) return SYM_NEQ;
     if (strcmp(name, "approx") == 0) return SYM_APPROX;
     if (strcmp(name, "to") == 0) return SYM_ARROW_RIGHT;
+    if (strcmp(name, "rightarrow") == 0) return SYM_ARROW_RIGHT;
     if (strcmp(name, "leftarrow") == 0) return SYM_ARROW_LEFT;
     if (strcmp(name, "uparrow") == 0) return SYM_ARROW_UP;
     if (strcmp(name, "downarrow") == 0) return SYM_ARROW_DOWN;
     if (strcmp(name, "infty") == 0) return SYM_INFINITY;
+    /* Uppercase Greek */
+    if (strcmp(name, "Gamma") == 0) return SYM_UC_GAMMA;
+    if (strcmp(name, "Delta") == 0) return SYM_UC_DELTA;
+    if (strcmp(name, "Theta") == 0) return SYM_UC_THETA;
+    if (strcmp(name, "Lambda") == 0) return SYM_UC_LAMBDA;
+    if (strcmp(name, "Xi") == 0) return SYM_UC_XI;
+    if (strcmp(name, "Pi") == 0) return SYM_UC_PI;
+    if (strcmp(name, "Sigma") == 0) return SYM_UC_SIGMA;
+    if (strcmp(name, "Upsilon") == 0) return SYM_UC_UPSILON;
+    if (strcmp(name, "Phi") == 0) return SYM_UC_PHI;
+    if (strcmp(name, "Psi") == 0) return SYM_UC_PSI;
+    if (strcmp(name, "Omega") == 0) return SYM_UC_OMEGA;
+    /* Greek variants */
+    if (strcmp(name, "varepsilon") == 0) return SYM_VAREPSILON;
+    if (strcmp(name, "vartheta") == 0) return SYM_VARTHETA;
+    if (strcmp(name, "varphi") == 0) return SYM_VARPHI;
+    /* Relations */
+    if (strcmp(name, "sim") == 0) return SYM_SIM;
+    if (strcmp(name, "cong") == 0) return SYM_CONG;
+    if (strcmp(name, "equiv") == 0) return SYM_EQUIV;
+    if (strcmp(name, "propto") == 0) return SYM_PROPTO;
+    /* Double arrows */
+    if (strcmp(name, "Rightarrow") == 0) return SYM_DARROW_RIGHT;
+    if (strcmp(name, "Leftarrow") == 0) return SYM_DARROW_LEFT;
+    if (strcmp(name, "Leftrightarrow") == 0) return SYM_DARROW_BOTH;
+    if (strcmp(name, "mapsto") == 0) return SYM_MAPSTO;
+    /* Set theory & logic */
+    if (strcmp(name, "in") == 0) return SYM_IN;
+    if (strcmp(name, "notin") == 0) return SYM_NOTIN;
+    if (strcmp(name, "subset") == 0) return SYM_SUBSET;
+    if (strcmp(name, "subseteq") == 0) return SYM_SUBSETEQ;
+    if (strcmp(name, "supset") == 0) return SYM_SUPSET;
+    if (strcmp(name, "supseteq") == 0) return SYM_SUPSETEQ;
+    if (strcmp(name, "cup") == 0) return SYM_CUP;
+    if (strcmp(name, "cap") == 0) return SYM_CAP;
+    if (strcmp(name, "emptyset") == 0) return SYM_EMPTYSET;
+    if (strcmp(name, "bigcup") == 0) return SYM_BIGCUP;
+    if (strcmp(name, "bigcap") == 0) return SYM_BIGCAP;
+    if (strcmp(name, "forall") == 0) return SYM_FORALL;
+    if (strcmp(name, "exists") == 0) return SYM_EXISTS;
+    if (strcmp(name, "neg") == 0) return SYM_NEG;
+    if (strcmp(name, "land") == 0) return SYM_LAND;
+    if (strcmp(name, "lor") == 0) return SYM_LOR;
+    /* Calculus & misc */
+    if (strcmp(name, "nabla") == 0) return SYM_NABLA;
+    if (strcmp(name, "partial") == 0) return SYM_PARTIAL;
+    if (strcmp(name, "mp") == 0) return SYM_MP;
+    if (strcmp(name, "cdot") == 0) return SYM_CDOT;
+    if (strcmp(name, "circ") == 0) return SYM_CIRC;
+    if (strcmp(name, "angle") == 0) return SYM_ANGLE;
+    if (strcmp(name, "degree") == 0) return SYM_DEGREE;
+    if (strcmp(name, "perp") == 0) return SYM_PERP;
+    if (strcmp(name, "parallel") == 0) return SYM_PARALLEL;
+    if (strcmp(name, "iint") == 0) return SYM_IINT;
+    if (strcmp(name, "iiint") == 0) return SYM_IIINT;
     return SYM_COUNT;  /* Not found */
 }
 

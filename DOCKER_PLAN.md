@@ -26,22 +26,24 @@ Run the full Docker implementation for LaTeX Viewer with Docker Desktop data, im
 | 6 — Verify + deploy | ✅ Verified on emulator — awaiting physical calculator test |
 
 ## Completed (last session)
-- New app icon: calligraphic 𝒰 on white background (92x64 color + monochrome)
-- UI color refinement: improved C_GRAY, C_DARKGRAY, C_SEL contrast values
-- Unified color palette into src/ui.h (removed duplication from main.c + filebrowser.c)
-- Docker build verified with all changes (78K .g3a)
+- Phase 1: Added 49 new 8x10 bitmap symbol glyphs (total 40 → 89 symbols)
+  - Uppercase Greek, Greek variants, relations, double arrows, set/logic, calculus/misc
+- Added `\rightarrow` alias for `\to`
+- Fixed macOS `._` dot-file duplicates in file browser
+- Docker build verified (81K .g3a), tested on physical fx-CG50
 
-## Current Task → ✅ Icon + UI color refinement complete
+## Current Task → ✅ Phase 1 symbol expansion complete
 
 ## Next Task
-- Test on physical fx-CG50 calculator (verify icon in menu + UI rendering)
+- Phase 2: Parser + renderer enhancements (spacing, function names, `\text{}`, `\left/\right`, accents, font styles, `\sqrt[n]{x}`, literal braces)
+- Phase 3: Environments (`\begin{matrix}`, `\begin{cases}`, `\begin{aligned}`)
 - Write DOCKER.md (Phase 5)
 - Push changes to GitHub (stairona/casio-latex-viewer)
 
 ## Open Risks
-- BFile behavior on physical hardware vs emulator not yet verified
 - Large .tex files may exceed 512K RAM
-- Icon rendering on calculator menu not yet verified (fxgxa may handle color icon differently)
+- Phase 2 parser changes may require new AST node types (environments, accents)
+- `\mathbb` glyphs (blackboard bold R, N, Z, Q, C) deferred to Phase 2 — need special font-style rendering, not just bitmap lookup
 
 ---
 

@@ -49,7 +49,9 @@ filebrowser_t *filebrowser_init(void)
 
         if (i == 0) break;
 
-        if (is_tex_file(narrow)) {
+        const char *basename = strrchr(narrow, '\\');
+        basename = basename ? basename + 1 : narrow;
+        if (is_tex_file(narrow) && basename[0] != '.') {
             fb->files[fb->count] = malloc(MAX_NAME);
             if (fb->files[fb->count]) {
                 strncpy(fb->files[fb->count], narrow, MAX_NAME - 1);
